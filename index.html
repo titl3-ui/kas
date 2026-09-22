@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Kas Kelas TITL3</title>
+    <title>Sistem Kas Kelas TITL 3</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -35,7 +35,6 @@
 
         .card { background: var(--card); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
         
-        /* Dashboard Saldo */
         .saldo-board { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
         .saldo-box { padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
         .saldo-box.sisa { background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
@@ -89,7 +88,6 @@
         .rekap-table td { padding: 5px; border: 1px solid var(--border); background: white;}
         .rekap-table td:first-child { text-align: left; font-weight: 600; background: #f9fafb; position: sticky; left: 0; z-index: 1;}
 
-        /* Style untuk Riwayat Pengeluaran */
         .expense-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
         .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid var(--border); border-left: 4px solid var(--danger); border-radius: 8px; }
         .expense-info strong { display: block; font-size: 0.9rem; color: var(--text); }
@@ -242,7 +240,7 @@
                 </div>
                 <div class="form-group">
                     <label>Nama Barang / Keterangan:</label>
-                    <input type="text" id="input-ket-keluar" placeholder="Contoh: Beli Spidol & Penghapus">
+                    <input type="text" id="input-ket-keluar" placeholder="Contoh: Beli Sapu & Pel">
                 </div>
                 <div class="form-group">
                     <label>Nominal Terpakai (Rp):</label>
@@ -250,7 +248,6 @@
                 </div>
                 <button class="btn btn-red" onclick="simpanPengeluaran()">Catat Pengeluaran</button>
 
-                <!-- Riwayat untuk Admin -->
                 <h4 style="font-size:0.85rem; margin-top:15px; margin-bottom:5px;">Riwayat (Bisa Dihapus):</h4>
                 <div class="expense-list" id="list-pengeluaran-admin"></div>
             </div>
@@ -261,11 +258,16 @@
                 <div id="list-pending"></div>
             </div>
 
-            <!-- Tabel Rekap Excel -->
+            <!-- Tabel Rekap Bulanan -->
             <div class="card">
-                <h3>Buku Rekap Keseluruhan 📊</h3>
-                <p style="font-size: 0.75rem; color: var(--muted); margin-bottom: 10px;">Tabel rekap 1 tahun penuh.</p>
-                <button class="btn btn-blue" onclick="downloadCSV()">⬇️ Download ke Excel (CSV)</button>
+                <h3>Buku Rekap Bulanan 📊</h3>
+                <p style="font-size: 0.75rem; color: var(--muted); margin-bottom: 10px;">Pilih bulan untuk melihat dan mendownload rekap kas.</p>
+                
+                <div class="form-group">
+                    <select id="select-bulan-rekap" onchange="renderTabelExcel()"></select>
+                </div>
+
+                <button class="btn btn-blue" onclick="downloadCSV()">⬇️ Download Excel Bulan Ini</button>
                 <div class="table-container" id="table-rekap-container"></div>
             </div>
 
@@ -359,11 +361,13 @@
     const selMingguSiswa = document.getElementById('select-minggu-siswa');
     const selBulanAdmin = document.getElementById('select-bulan-admin');
     const selMingguAdmin = document.getElementById('select-minggu-admin');
+    const selBulanRekap = document.getElementById('select-bulan-rekap'); // Dropdown Tabel Rekap Baru
 
     Object.keys(DATA_JADWAL).forEach(bulan => {
         let opt1 = document.createElement('option'); opt1.value = opt1.textContent = bulan;
         let opt2 = document.createElement('option'); opt2.value = opt2.textContent = bulan;
-        selBulanSiswa.appendChild(opt1); selBulanAdmin.appendChild(opt2);
+        let opt3 = document.createElement('option'); opt3.value = opt3.textContent = bulan;
+        selBulanSiswa.appendChild(opt1); selBulanAdmin.appendChild(opt2); selBulanRekap.appendChild(opt3);
     });
 
     window.updateListTanggalSiswa = () => {
@@ -384,7 +388,10 @@
         });
     }
 
-    selBulanSiswa.value = "September 2026"; selBulanAdmin.value = "September 2026";
+    // Default Dropdown
+    selBulanSiswa.value = "September 2026"; 
+    selBulanAdmin.value = "September 2026";
+    selBulanRekap.value = "September 2026";
     updateListTanggalSiswa(); updateListTanggalAdmin();
 
     const selectNama = document.getElementById('select-nama-siswa');
@@ -443,7 +450,7 @@
         
         hitungSaldoDanPengeluaran(); 
         renderGrid();
-        renderTabelExcel();
+        window.renderTabelExcel(); // Render tabel rekap saat data berubah
         if(selectNama.value) window.cekTunggakanSiswa(); 
     });
 
@@ -530,7 +537,6 @@
         }
     }
 
-
     window.cekTunggakanSiswa = () => {
         const nama = selectNama.value;
         const infoBox = document.getElementById('info-auto-pay');
@@ -603,21 +609,35 @@
         }
     }
 
-    function renderTabelExcel() {
-        let batasHitung = DAFTAR_MINGGU.indexOf(MINGGU_BERJALAN);
+    // ==========================================
+    // TABEL REKAP BULANAN & DOWNLOAD CSV
+    // ==========================================
+    window.renderTabelExcel = () => {
+        // Ambil bulan yang dipilih dari dropdown khusus tabel rekap
+        const bulanPilihan = document.getElementById('select-bulan-rekap').value;
+        const mingguDiBulanIni = DATA_JADWAL[bulanPilihan];
+        
         let tableHTML = '<table class="rekap-table"><tr><th>Nama Siswa</th>';
-        for(let i = 0; i <= batasHitung; i++) {
-            let part = DAFTAR_MINGGU[i].split(' ');
+        
+        // Buat judul kolom hanya untuk tanggal di bulan yang dipilih
+        for(let i = 0; i < mingguDiBulanIni.length; i++) {
+            let part = mingguDiBulanIni[i].split(' ');
             tableHTML += `<th>${part[0]} ${part[1].substring(0,3)}</th>`;
         }
         tableHTML += '</tr>';
 
+        // Isi data per siswa untuk bulan yang dipilih
         DAFTAR_SISWA.forEach(nama => {
             tableHTML += `<tr><td>${nama}</td>`;
-            for(let i = 0; i <= batasHitung; i++) {
-                let m = DAFTAR_MINGGU[i];
-                if(dataLiburKas[m]) { tableHTML += `<td style="background:#fef3c7; color:#d97706; font-size:0.65rem;">LIBUR</td>`; } 
-                else { let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false; tableHTML += `<td>${isLunas ? '✅' : '❌'}</td>`; }
+            for(let i = 0; i < mingguDiBulanIni.length; i++) {
+                let m = mingguDiBulanIni[i];
+                if(dataLiburKas[m]) { 
+                    tableHTML += `<td style="background:#fef3c7; color:#d97706; font-size:0.65rem;">LIBUR</td>`; 
+                } 
+                else { 
+                    let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false; 
+                    tableHTML += `<td>${isLunas ? '✅' : '❌'}</td>`; 
+                }
             }
             tableHTML += '</tr>';
         });
@@ -626,24 +646,38 @@
     }
 
     window.downloadCSV = () => {
+        // Hanya download data dari bulan yang sedang dipilih
+        const bulanPilihan = document.getElementById('select-bulan-rekap').value;
+        const mingguDiBulanIni = DATA_JADWAL[bulanPilihan];
+        
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        let batasHitung = DAFTAR_MINGGU.indexOf(MINGGU_BERJALAN);
         let headers = ["Nama Siswa"];
-        for(let i = 0; i <= batasHitung; i++) headers.push(DAFTAR_MINGGU[i]);
+        
+        for(let i = 0; i < mingguDiBulanIni.length; i++) {
+            headers.push(mingguDiBulanIni[i]);
+        }
         csvContent += headers.join(";") + "\r\n";
 
         DAFTAR_SISWA.forEach(nama => {
             let row = [nama];
-            for(let i = 0; i <= batasHitung; i++) {
-                let m = DAFTAR_MINGGU[i];
-                if(dataLiburKas[m]) { row.push("LIBUR"); } 
-                else { let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false; row.push(isLunas ? "✅" : "❌"); }
+            for(let i = 0; i < mingguDiBulanIni.length; i++) {
+                let m = mingguDiBulanIni[i];
+                if(dataLiburKas[m]) { 
+                    row.push("LIBUR"); 
+                } else { 
+                    let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false; 
+                    row.push(isLunas ? "✅" : "❌"); 
+                }
             }
             csvContent += row.join(";") + "\r\n";
         });
 
+        // Nama file Excel akan mengikuti nama bulan (Contoh: Rekap_Kas_September_2026.csv)
+        let namaFile = "Rekap_Kas_" + bulanPilihan.replace(" ", "_") + ".csv";
         var encodedUri = encodeURI(csvContent);
-        var link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "Buku_Kas_TITL3_Kuningan.csv");
+        var link = document.createElement("a"); 
+        link.setAttribute("href", encodedUri); 
+        link.setAttribute("download", namaFile);
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
