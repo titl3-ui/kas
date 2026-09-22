@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Kas Kelas SMKN 3 Kuningan</title>
+    <title>Sistem Kas Kelas TITL3</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -110,7 +110,7 @@
 <div class="container">
     <div class="header-title">
         <h1>Uang Kas Kelas</h1>
-        <p>SMKN 3 Kuningan - Tahun Ajaran 2026/2027</p>
+        <p>TITL 3</p>
         <div class="badge-price">Tarif: Rp 2.000 / Minggu</div>
     </div>
 
@@ -145,7 +145,6 @@
             
             <h4 style="font-size:0.85rem; margin-top:15px; margin-bottom:5px;">Riwayat Pengeluaran Kelas:</h4>
             <div class="expense-list" id="list-pengeluaran-publik">
-                <!-- Muncul dari Firebase -->
                 <div style="text-align:center; font-size:0.8rem; color:gray;">Belum ada pengeluaran dicatat.</div>
             </div>
         </div>
@@ -166,8 +165,8 @@
             <button class="btn btn-gray" id="btn-toggle-qr" onclick="toggleQR()" style="display: none;">📷 Tampilkan QRIS / Scan Pembayaran</button>
 
             <div class="qr-container" id="qr-box-container">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ContohQRBayar" alt="QR Bendahara">
-                <p style="font-size: 0.8rem; font-weight: bold;">Atas Nama: Hillal Nur Azhar</p>
+                <img src="https://i.ibb.co.com/4R9f05t6/1789991701699.jpg" alt="QR Bendahara">
+                <p style="font-size: 0.8rem; font-weight: bold;">Atas Nama: Hillal </p>
                 <p style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">Scan QR di atas lewat m-Banking atau E-Wallet (DANA/OVO/GoPay)</p>
             </div>
 
@@ -194,17 +193,15 @@
 
     <!-- ================= HALAMAN BENDAHARA ================= -->
     <div id="panel-bendahara">
+        
+        <!-- LOGIN HANYA PAKAI SANDI (SIMPEL) -->
         <div class="card" id="login-screen">
-            <h3>Login Bendahara (Aman 🔒)</h3>
-            <div class="form-group">
-                <label>Email Admin:</label>
-                <input type="email" id="input-email" placeholder="contoh@kas.com">
-            </div>
+            <h3>Login Bendahara</h3>
             <div class="form-group">
                 <label>Kata Sandi:</label>
-                <input type="password" id="input-sandi" placeholder="Masukkan Sandi...">
+                <input type="password" id="input-sandi" placeholder="Masukkan Sandi Rahasia...">
             </div>
-            <button class="btn btn-green" onclick="prosesLogin()" id="btn-login">Masuk ke Panel</button>
+            <button class="btn btn-green" onclick="prosesLogin()">Masuk ke Panel</button>
         </div>
 
         <div id="dashboard-bendahara">
@@ -287,7 +284,7 @@
                     </div>
                 </div>
 
-                <button class="btn btn-warning" id="btn-libur" onclick="toggleLiburMinggu()">🏖️ Liburkan / Aktifkan Minggu Ini</button>
+                <button class="btn btn-warning" onclick="toggleLiburMinggu()">🏖️ Liburkan / Aktifkan Minggu Ini</button>
 
                 <div class="student-grid" id="grid-status-admin"></div>
             </div>
@@ -298,8 +295,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
+    
     const firebaseConfig = {
         apiKey: "AIzaSyDVVNrVrW46U8qQdgXSbjqUh6MZgWGd2zc",
         authDomain: "smart-relay-esp32-e285e.firebaseapp.com",
@@ -311,9 +307,12 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth(app); 
 
+    // ===============================================
+    // PENGATURAN KAS & KATA SANDI SIMPEL
+    // ===============================================
     const NOMINAL_KAS = 2000;
+    const SANDI_BENDAHARA = "jaya"; 
     
     const DAFTAR_SISWA = [
         "ADE MUHAMMAD JAUUHARUDIN", "AHMAD TAUFIQURRAHMAN", "ALDI FIRANSYAH", "ALVIN OKTAVIAN PUTRA", 
@@ -351,10 +350,9 @@
     let mingguAktif = MINGGU_BERJALAN;
     let semuaDataKas = {}; 
     let dataLiburKas = {}; 
-    let dataPengeluaran = {}; // Variabel baru untuk pengeluaran
+    let dataPengeluaran = {}; 
     let targetBayarOtomatis = ""; 
 
-    // Set Tanggal Hari Ini untuk Form Pengeluaran
     document.getElementById('input-tgl-keluar').valueAsDate = new Date();
 
     const selBulanSiswa = document.getElementById('select-bulan-siswa');
@@ -416,41 +414,34 @@
     }
 
     // ==========================================
-    // SISTEM LOGIN FIREBASE
+    // SISTEM LOGIN (VERSI SIMPEL KATA SANDI)
     // ==========================================
     window.prosesLogin = () => {
-        const email = document.getElementById('input-email').value;
-        const password = document.getElementById('input-sandi').value;
-        const btnLogin = document.getElementById('btn-login');
-        
-        if(!email || !password) { alert("Email dan Sandi harus diisi!"); return; }
-        
-        btnLogin.textContent = "Mengecek Sandi..."; btnLogin.disabled = true;
-        signInWithEmailAndPassword(auth, email, password)
-            .then(() => { btnLogin.textContent = "Masuk ke Panel"; btnLogin.disabled = false; })
-            .catch(() => { alert("Login Gagal! Email atau Sandi salah."); btnLogin.textContent = "Masuk ke Panel"; btnLogin.disabled = false; });
+        const inputSandi = document.getElementById('input-sandi').value;
+        if(inputSandi === SANDI_BENDAHARA) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-bendahara').style.display = 'block';
+        } else {
+            alert("Kata Sandi Salah! Silakan coba lagi.");
+        }
     }
 
     window.prosesLogout = () => {
-        if(confirm("Yakin ingin keluar?")) { signOut(auth).then(() => { alert("Berhasil keluar."); }); }
-    }
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-bendahara').style.display = 'block';
-        } else {
-            document.getElementById('login-screen').style.display = 'block'; document.getElementById('dashboard-bendahara').style.display = 'none';
+        if(confirm("Yakin ingin keluar dari panel bendahara?")) {
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('dashboard-bendahara').style.display = 'none';
+            document.getElementById('input-sandi').value = "";
         }
-    });
+    }
 
     // ================= DATA (REAL-TIME) =================
     onValue(ref(db, 'KasKelasAbsen'), (snapshot) => {
         const rootData = snapshot.val() || {};
         semuaDataKas = rootData.Data || {};
         dataLiburKas = rootData.LiburMinggu || {};
-        dataPengeluaran = rootData.Pengeluaran || {}; // Ambil data pengeluaran
+        dataPengeluaran = rootData.Pengeluaran || {}; 
         
-        hitungSaldoDanPengeluaran(); // Kalkulasi Uang
+        hitungSaldoDanPengeluaran(); 
         renderGrid();
         renderTabelExcel();
         if(selectNama.value) window.cekTunggakanSiswa(); 
@@ -458,13 +449,11 @@
 
     // ================= MODUL KEUANGAN (SALDO & PENGELUARAN) =================
     
-    // Fungsi Menghitung Saldo
     function hitungSaldoDanPengeluaran() {
         let totalMasuk = 0;
         let totalKeluar = 0;
         const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 
-        // Hitung Semua Uang Masuk dari setiap minggu yang lunas (2000 per orang)
         Object.keys(semuaDataKas).forEach(minggu => {
             Object.keys(semuaDataKas[minggu]).forEach(namaSiswa => {
                 if(semuaDataKas[minggu][namaSiswa] === true) {
@@ -473,7 +462,6 @@
             });
         });
 
-        // Hitung Semua Pengeluaran
         let htmlRiwayatPublik = '';
         let htmlRiwayatAdmin = '';
 
@@ -481,21 +469,18 @@
             htmlRiwayatPublik = '<div style="text-align:center; font-size:0.8rem; color:gray;">Belum ada pengeluaran dicatat.</div>';
             htmlRiwayatAdmin = htmlRiwayatPublik;
         } else {
-            // Urutkan pengeluaran dari yang terbaru
             const arrPengeluaran = Object.keys(dataPengeluaran).map(key => ({ id: key, ...dataPengeluaran[key] })).sort((a,b) => b.waktu - a.waktu);
             
             arrPengeluaran.forEach(keluar => {
                 totalKeluar += parseInt(keluar.nominal);
                 let tglFormat = new Date(keluar.tanggal).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
                 
-                // Item Publik
                 htmlRiwayatPublik += `
                     <div class="expense-item">
                         <div class="expense-info"><strong>${keluar.keterangan}</strong><span>${tglFormat}</span></div>
                         <div class="expense-amount">- ${formatRupiah(keluar.nominal)}</div>
                     </div>`;
                     
-                // Item Admin (Ada tombol hapus)
                 htmlRiwayatAdmin += `
                     <div class="expense-item">
                         <div class="expense-info"><strong>${keluar.keterangan}</strong><span>${tglFormat}</span></div>
@@ -507,7 +492,6 @@
             });
         }
 
-        // Tulis ke HTML
         let sisaSaldo = totalMasuk - totalKeluar;
         
         document.getElementById('saldo-masuk-publik').textContent = formatRupiah(totalMasuk);
@@ -521,10 +505,7 @@
         document.getElementById('list-pengeluaran-admin').innerHTML = htmlRiwayatAdmin;
     }
 
-    // Fungsi Bendahara Simpan Pengeluaran
     window.simpanPengeluaran = () => {
-        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
-        
         const tgl = document.getElementById('input-tgl-keluar').value;
         const ket = document.getElementById('input-ket-keluar').value;
         const nom = document.getElementById('input-nom-keluar').value;
@@ -543,9 +524,7 @@
         });
     }
 
-    // Fungsi Bendahara Hapus Pengeluaran (Jika salah catat)
     window.hapusPengeluaran = (idUnik) => {
-        if(!auth.currentUser) return;
         if(confirm("Yakin ingin menghapus catatan pengeluaran ini? Saldo sisa akan kembali bertambah.")) {
             remove(ref(db, 'KasKelasAbsen/Pengeluaran/' + idUnik));
         }
@@ -618,7 +597,6 @@
     }
 
     window.toggleLiburMinggu = () => {
-        if(!auth.currentUser) { alert("Sesi login kamu sudah habis, silakan login ulang!"); return; }
         const statusLiburSekarang = dataLiburKas[mingguAktif] || false;
         if(confirm(statusLiburSekarang ? `Aktifkan kembali kas untuk tanggal ${mingguAktif}?` : `Liburkan kas untuk tanggal ${mingguAktif}?`)) {
             update(ref(db, 'KasKelasAbsen/LiburMinggu'), { [mingguAktif]: !statusLiburSekarang });
@@ -665,7 +643,7 @@
         });
 
         var encodedUri = encodeURI(csvContent);
-        var link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "Buku_Kas_SMKN3_Kuningan.csv");
+        var link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "Buku_Kas_TITL3_Kuningan.csv");
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
@@ -685,7 +663,6 @@
     }
 
     window.accTransfer = (idUnik, namaSiswa, untukMinggu) => {
-        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
         if(confirm(`ACC uang dari ${namaSiswa} untuk tanggal \n${untukMinggu}?`)) {
             update(ref(db, `KasKelasAbsen/Data/${untukMinggu}`), { [namaSiswa]: true });
             remove(ref(db, 'KasKelasAbsen/PendingQR/' + idUnik));
@@ -693,17 +670,13 @@
     }
 
     window.tolakTransfer = (idUnik, namaSiswa) => {
-        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
         if(confirm(`Tolak konfirmasi ${namaSiswa}?`)) { remove(ref(db, 'KasKelasAbsen/PendingQR/' + idUnik)); }
     }
 
     window.toggleStatusManual = (namaSiswa) => {
-        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
         if(dataLiburKas[mingguAktif]) { alert("Minggu ini sedang status LIBUR KAS. Tidak bisa diubah."); return; }
         const statusSekarang = semuaDataKas[mingguAktif] ? semuaDataKas[mingguAktif][namaSiswa] : false;
-        update(ref(db, `KasKelasAbsen/Data/${mingguAktif}`), { [namaSiswa]: !statusSekarang }).catch(err => {
-            alert("Akses ditolak oleh Firebase! Pastikan kamu sudah Login dengan benar dan Rule Database sudah diubah.");
-        });
+        update(ref(db, `KasKelasAbsen/Data/${mingguAktif}`), { [namaSiswa]: !statusSekarang });
     }
 
     // Listener Antrean 
