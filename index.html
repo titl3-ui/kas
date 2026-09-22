@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Kas Kelas XI TITL 3</title>
+    <title>Sistem Kas Kelas SMKN 3 Kuningan</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -16,6 +16,7 @@
             --danger: #ef4444;
             --border: #e5e7eb;
             --warning: #f59e0b;
+            --blue: #3b82f6;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -34,7 +35,17 @@
 
         .card { background: var(--card); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
         
-        /* QR Container yang bisa disembunyikan/ditampilkan */
+        /* Dashboard Saldo */
+        .saldo-board { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+        .saldo-box { padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .saldo-box.sisa { background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+        .saldo-box.masuk { background: #dcfce7; color: #166534; }
+        .saldo-box.keluar { background: #fee2e2; color: #991b1b; }
+        .saldo-label { font-size: 0.75rem; font-weight: 600; opacity: 0.9; margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+        .saldo-amount { font-size: 1.25rem; font-weight: 800; }
+        .saldo-sisa-amount { font-size: 1.75rem; font-weight: 800; }
+        .saldo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
         .qr-container { display: none; text-align: center; margin-top: 1rem; margin-bottom: 1.5rem; border: 2px dashed var(--primary); padding: 1rem; border-radius: 12px; background: #fdfdfd; }
         .qr-container img { max-width: 200px; border-radius: 8px; margin-bottom: 10px; }
         
@@ -46,7 +57,7 @@
         .btn-green { background: var(--primary); }
         .btn-green:hover { background: var(--primary-dark); }
         .btn-red { background: var(--danger); }
-        .btn-blue { background: #3b82f6; margin-bottom: 10px;}
+        .btn-blue { background: var(--blue); margin-bottom: 10px;}
         .btn-blue:hover { background: #2563eb; }
         .btn-warning { background: var(--warning); margin-bottom: 10px; }
         .btn-warning:hover { background: #d97706; }
@@ -78,6 +89,13 @@
         .rekap-table td { padding: 5px; border: 1px solid var(--border); background: white;}
         .rekap-table td:first-child { text-align: left; font-weight: 600; background: #f9fafb; position: sticky; left: 0; z-index: 1;}
 
+        /* Style untuk Riwayat Pengeluaran */
+        .expense-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid var(--border); border-left: 4px solid var(--danger); border-radius: 8px; }
+        .expense-info strong { display: block; font-size: 0.9rem; color: var(--text); }
+        .expense-info span { font-size: 0.75rem; color: var(--muted); }
+        .expense-amount { font-weight: 700; color: var(--danger); font-size: 0.9rem; }
+
         #panel-bendahara { display: none; }
         .pending-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #fcd34d; background: #fef3c7; border-radius: 8px; margin-bottom: 10px; }
         .pending-actions { display: flex; gap: 5px; }
@@ -92,7 +110,7 @@
 <div class="container">
     <div class="header-title">
         <h1>Uang Kas Kelas</h1>
-        <p>XI TITL 3</p>
+        <p>SMKN 3 Kuningan - Tahun Ajaran 2026/2027</p>
         <div class="badge-price">Tarif: Rp 2.000 / Minggu</div>
     </div>
 
@@ -104,9 +122,36 @@
 
     <!-- ================= HALAMAN SISWA ================= -->
     <div id="panel-siswa">
-        <!-- Kotak Konfirmasi Pembayaran (Nama di Atas) -->
+        
+        <!-- DASHBOARD SALDO (PUBLIK) -->
         <div class="card">
-            <h3>PEMBAYARAN MELALUI QRIS</h3>
+            <h3>Transparansi Keuangan 💰</h3>
+            <div class="saldo-board">
+                <div class="saldo-box sisa">
+                    <span class="saldo-label">Sisa Saldo Kas Kelas</span>
+                    <span class="saldo-sisa-amount" id="saldo-sisa-publik">Rp 0</span>
+                </div>
+                <div class="saldo-grid">
+                    <div class="saldo-box masuk">
+                        <span class="saldo-label">Total Pemasukan</span>
+                        <span class="saldo-amount" id="saldo-masuk-publik">Rp 0</span>
+                    </div>
+                    <div class="saldo-box keluar">
+                        <span class="saldo-label">Total Pengeluaran</span>
+                        <span class="saldo-amount" id="saldo-keluar-publik">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 style="font-size:0.85rem; margin-top:15px; margin-bottom:5px;">Riwayat Pengeluaran Kelas:</h4>
+            <div class="expense-list" id="list-pengeluaran-publik">
+                <!-- Muncul dari Firebase -->
+                <div style="text-align:center; font-size:0.8rem; color:gray;">Belum ada pengeluaran dicatat.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Konfirmasi Pembayaran Kas</h3>
             <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 15px;">Pilih nama kamu terlebih dahulu untuk melihat tunggakan dan tombol pembayaran QRIS.</p>
             
             <div class="form-group">
@@ -116,23 +161,19 @@
                 </select>
             </div>
             
-            <!-- Info Target Pembayaran Otomatis -->
             <div id="info-auto-pay" class="auto-pay-info"></div>
 
-            <!-- Tombol untuk Membuka/Menutup QRIS -->
             <button class="btn btn-gray" id="btn-toggle-qr" onclick="toggleQR()" style="display: none;">📷 Tampilkan QRIS / Scan Pembayaran</button>
 
-            <!-- Kotak QRIS yang disembunyikan awalnya -->
             <div class="qr-container" id="qr-box-container">
-                <img src="https://i.ibb.co.com/4R9f05t6/1789991701699.jpg" alt="QR Bendahara">
-                <p style="font-size: 0.8rem; font-weight: bold;"></p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ContohQRBayar" alt="QR Bendahara">
+                <p style="font-size: 0.8rem; font-weight: bold;">Atas Nama: Hillal Nur Azhar</p>
                 <p style="font-size: 0.7rem; color: var(--muted); margin-top: 4px;">Scan QR di atas lewat m-Banking atau E-Wallet (DANA/OVO/GoPay)</p>
             </div>
 
             <button class="btn btn-green" id="btn-kirim-qr" onclick="kirimBukti()" disabled style="opacity: 0.5;">Kirim Konfirmasi Bayar</button>
         </div>
 
-        <!-- Daftar Status Kelas -->
         <div class="card">
             <h3>Daftar Status Kelas</h3>
             
@@ -154,12 +195,69 @@
     <!-- ================= HALAMAN BENDAHARA ================= -->
     <div id="panel-bendahara">
         <div class="card" id="login-screen">
-            <h3>Login Bendahara</h3>
-            <div class="form-group"><input type="password" id="input-sandi" placeholder="Masukkan Sandi..."></div>
-            <button class="btn btn-green" onclick="cekSandi()">Masuk</button>
+            <h3>Login Bendahara (Aman 🔒)</h3>
+            <div class="form-group">
+                <label>Email Admin:</label>
+                <input type="email" id="input-email" placeholder="contoh@kas.com">
+            </div>
+            <div class="form-group">
+                <label>Kata Sandi:</label>
+                <input type="password" id="input-sandi" placeholder="Masukkan Sandi...">
+            </div>
+            <button class="btn btn-green" onclick="prosesLogin()" id="btn-login">Masuk ke Panel</button>
         </div>
 
         <div id="dashboard-bendahara">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <span style="font-size:0.8rem; font-weight:bold; color:var(--primary-dark);">✅ Mode Bendahara Aktif</span>
+                <button onclick="prosesLogout()" style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer;">Keluar (Logout)</button>
+            </div>
+
+            <!-- DASHBOARD SALDO (ADMIN) -->
+            <div class="card">
+                <h3>Ringkasan Keuangan Kelas 💰</h3>
+                <div class="saldo-board">
+                    <div class="saldo-box sisa">
+                        <span class="saldo-label">Sisa Saldo Kas Kelas</span>
+                        <span class="saldo-sisa-amount" id="saldo-sisa-admin">Rp 0</span>
+                    </div>
+                    <div class="saldo-grid">
+                        <div class="saldo-box masuk">
+                            <span class="saldo-label">Total Pemasukan</span>
+                            <span class="saldo-amount" id="saldo-masuk-admin">Rp 0</span>
+                        </div>
+                        <div class="saldo-box keluar">
+                            <span class="saldo-label">Total Pengeluaran</span>
+                            <span class="saldo-amount" id="saldo-keluar-admin">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATAT PENGELUARAN -->
+            <div class="card">
+                <h3>Catat Pengeluaran Baru 📝</h3>
+                <p style="font-size: 0.75rem; color: var(--muted); margin-bottom: 10px;">Gunakan form ini jika ada uang kas yang terpakai (beli alat kebersihan, fotokopi, dll).</p>
+                
+                <div class="form-group">
+                    <label>Tanggal Pengeluaran:</label>
+                    <input type="date" id="input-tgl-keluar">
+                </div>
+                <div class="form-group">
+                    <label>Nama Barang / Keterangan:</label>
+                    <input type="text" id="input-ket-keluar" placeholder="Contoh: Beli Spidol & Penghapus">
+                </div>
+                <div class="form-group">
+                    <label>Nominal Terpakai (Rp):</label>
+                    <input type="number" id="input-nom-keluar" placeholder="Contoh: 15000">
+                </div>
+                <button class="btn btn-red" onclick="simpanPengeluaran()">Catat Pengeluaran</button>
+
+                <!-- Riwayat untuk Admin -->
+                <h4 style="font-size:0.85rem; margin-top:15px; margin-bottom:5px;">Riwayat (Bisa Dihapus):</h4>
+                <div class="expense-list" id="list-pengeluaran-admin"></div>
+            </div>
+
             <!-- Antrean Transfer -->
             <div class="card">
                 <h3>Menunggu ACC Transfer 🔔</h3>
@@ -200,6 +298,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDVVNrVrW46U8qQdgXSbjqUh6MZgWGd2zc",
@@ -212,10 +311,10 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app); 
 
     const NOMINAL_KAS = 2000;
-    const SANDI_BENDAHARA = "jaya"; 
-
+    
     const DAFTAR_SISWA = [
         "ADE MUHAMMAD JAUUHARUDIN", "AHMAD TAUFIQURRAHMAN", "ALDI FIRANSYAH", "ALVIN OKTAVIAN PUTRA", 
         "ARDAN HABIBI YANA", "BAKHTIAR ALTAF BASYAR", "BEBBY APRILIA FIRANSYAH", "DANI RAMA DANI", 
@@ -230,55 +329,33 @@
     ];
 
     const DATA_JADWAL = {
-        "Agustus 2026": [
-            "3 Agustus 2026", "10 Agustus 2026", "17 Agustus 2026", "24 Agustus 2026", "31 Agustus 2026"
-        ],
-        "September 2026": [
-            "7 September 2026", "14 September 2026", "21 September 2026", "28 September 2026"
-        ],
-        "Oktober 2026": [
-            "5 Oktober 2026", "12 Oktober 2026", "19 Oktober 2026", "26 Oktober 2026"
-        ],
-        "November 2026": [
-            "2 November 2026", "9 November 2026", "16 November 2026", "23 November 2026", "30 November 2026"
-        ],
-        "Desember 2026": [
-            "7 Desember 2026", "14 Desember 2026", "21 Desember 2026", "28 Desember 2026"
-        ],
-        "Januari 2027": [
-            "4 Januari 2027", "11 Januari 2027", "18 Januari 2027", "25 Januari 2027"
-        ],
-        "Februari 2027": [
-            "1 Februari 2027", "8 Februari 2027", "15 Februari 2027", "22 Februari 2027"
-        ],
-        "Maret 2027": [
-            "1 Maret 2027", "8 Maret 2027", "15 Maret 2027", "22 Maret 2027", "29 Maret 2027"
-        ],
-        "April 2027": [
-            "5 April 2027", "12 April 2027", "19 April 2027", "26 April 2027"
-        ],
-        "Mei 2027": [
-            "3 Mei 2027", "10 Mei 2027", "17 Mei 2027", "24 Mei 2027", "31 Mei 2027"
-        ],
-        "Juni 2027": [
-            "7 Juni 2027", "14 Juni 2027", "21 Juni 2027", "28 Juni 2027"
-        ],
-        "Juli 2027": [
-            "5 Juli 2027", "12 Juli 2027", "19 Juli 2027", "26 Juli 2027"
-        ]
+        "Agustus 2026": ["3 Agustus 2026", "10 Agustus 2026", "17 Agustus 2026", "24 Agustus 2026", "31 Agustus 2026"],
+        "September 2026": ["7 September 2026", "14 September 2026", "21 September 2026", "28 September 2026"],
+        "Oktober 2026": ["5 Oktober 2026", "12 Oktober 2026", "19 Oktober 2026", "26 Oktober 2026"],
+        "November 2026": ["2 November 2026", "9 November 2026", "16 November 2026", "23 November 2026", "30 November 2026"],
+        "Desember 2026": ["7 Desember 2026", "14 Desember 2026", "21 Desember 2026", "28 Desember 2026"],
+        "Januari 2027": ["4 Januari 2027", "11 Januari 2027", "18 Januari 2027", "25 Januari 2027"],
+        "Februari 2027": ["1 Februari 2027", "8 Februari 2027", "15 Februari 2027", "22 Februari 2027"],
+        "Maret 2027": ["1 Maret 2027", "8 Maret 2027", "15 Maret 2027", "22 Maret 2027", "29 Maret 2027"],
+        "April 2027": ["5 April 2027", "12 April 2027", "19 April 2027", "26 April 2027"],
+        "Mei 2027": ["3 Mei 2027", "10 Mei 2027", "17 Mei 2027", "24 Mei 2027", "31 Mei 2027"],
+        "Juni 2027": ["7 Juni 2027", "14 Juni 2027", "21 Juni 2027", "28 Juni 2027"],
+        "July 2027": ["5 Juli 2027", "12 Juli 2027", "19 Juli 2027", "26 Juli 2027"]
     };
 
     let DAFTAR_MINGGU = [];
-    Object.keys(DATA_JADWAL).forEach(bulan => {
-        DAFTAR_MINGGU = DAFTAR_MINGGU.concat(DATA_JADWAL[bulan]);
-    });
+    Object.keys(DATA_JADWAL).forEach(b => { DAFTAR_MINGGU = DAFTAR_MINGGU.concat(DATA_JADWAL[b]); });
 
     const MINGGU_BERJALAN = "14 September 2026"; 
 
     let mingguAktif = MINGGU_BERJALAN;
     let semuaDataKas = {}; 
     let dataLiburKas = {}; 
+    let dataPengeluaran = {}; // Variabel baru untuk pengeluaran
     let targetBayarOtomatis = ""; 
+
+    // Set Tanggal Hari Ini untuk Form Pengeluaran
+    document.getElementById('input-tgl-keluar').valueAsDate = new Date();
 
     const selBulanSiswa = document.getElementById('select-bulan-siswa');
     const selMingguSiswa = document.getElementById('select-minggu-siswa');
@@ -288,42 +365,33 @@
     Object.keys(DATA_JADWAL).forEach(bulan => {
         let opt1 = document.createElement('option'); opt1.value = opt1.textContent = bulan;
         let opt2 = document.createElement('option'); opt2.value = opt2.textContent = bulan;
-        selBulanSiswa.appendChild(opt1);
-        selBulanAdmin.appendChild(opt2);
+        selBulanSiswa.appendChild(opt1); selBulanAdmin.appendChild(opt2);
     });
 
     window.updateListTanggalSiswa = () => {
-        const bulanPilihan = selBulanSiswa.value;
         selMingguSiswa.innerHTML = '';
-        DATA_JADWAL[bulanPilihan].forEach(tgl => {
-            let opt = document.createElement('option');
-            opt.value = opt.textContent = tgl;
+        DATA_JADWAL[selBulanSiswa.value].forEach(tgl => {
+            let opt = document.createElement('option'); opt.value = opt.textContent = tgl;
             if(tgl === mingguAktif) opt.selected = true;
             selMingguSiswa.appendChild(opt);
         });
     }
 
     window.updateListTanggalAdmin = () => {
-        const bulanPilihan = selBulanAdmin.value;
         selMingguAdmin.innerHTML = '';
-        DATA_JADWAL[bulanPilihan].forEach(tgl => {
-            let opt = document.createElement('option');
-            opt.value = opt.textContent = tgl;
+        DATA_JADWAL[selBulanAdmin.value].forEach(tgl => {
+            let opt = document.createElement('option'); opt.value = opt.textContent = tgl;
             if(tgl === mingguAktif) opt.selected = true;
             selMingguAdmin.appendChild(opt);
         });
     }
 
-    selBulanSiswa.value = "September 2026";
-    selBulanAdmin.value = "September 2026";
-    updateListTanggalSiswa();
-    updateListTanggalAdmin();
+    selBulanSiswa.value = "September 2026"; selBulanAdmin.value = "September 2026";
+    updateListTanggalSiswa(); updateListTanggalAdmin();
 
     const selectNama = document.getElementById('select-nama-siswa');
     DAFTAR_SISWA.forEach(nama => {
-        let opt = document.createElement('option');
-        opt.value = opt.textContent = nama;
-        selectNama.appendChild(opt);
+        let opt = document.createElement('option'); opt.value = opt.textContent = nama; selectNama.appendChild(opt);
     });
 
     window.switchTab = (tab) => {
@@ -333,43 +401,156 @@
         document.getElementById('btn-tab-bendahara').classList.toggle('active', tab === 'bendahara');
     }
 
-    window.cekSandi = () => {
-        if(document.getElementById('input-sandi').value === SANDI_BENDAHARA) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('dashboard-bendahara').style.display = 'block';
-        } else {
-            alert("Sandi Salah!");
-        }
-    }
-
     window.ubahMinggu = (val) => {
-        mingguAktif = val;
-        selMingguSiswa.value = val;
-        selMingguAdmin.value = val;
-        renderGrid(); 
+        mingguAktif = val; selMingguSiswa.value = val; selMingguAdmin.value = val; renderGrid(); 
     }
 
-    // Fungsi Membuka/Menutup Kotak QRIS
     window.toggleQR = () => {
         const qrBox = document.getElementById('qr-box-container');
         const btnQr = document.getElementById('btn-toggle-qr');
         if(qrBox.style.display === "block") {
-            qrBox.style.display = "none";
-            btnQr.textContent = "📷 Tampilkan QRIS / Scan Pembayaran";
+            qrBox.style.display = "none"; btnQr.textContent = "📷 Tampilkan QRIS / Scan Pembayaran";
         } else {
-            qrBox.style.display = "block";
-            btnQr.textContent = "❌ Sembunyikan QRIS";
+            qrBox.style.display = "block"; btnQr.textContent = "❌ Sembunyikan QRIS";
         }
     }
 
+    // ==========================================
+    // SISTEM LOGIN FIREBASE
+    // ==========================================
+    window.prosesLogin = () => {
+        const email = document.getElementById('input-email').value;
+        const password = document.getElementById('input-sandi').value;
+        const btnLogin = document.getElementById('btn-login');
+        
+        if(!email || !password) { alert("Email dan Sandi harus diisi!"); return; }
+        
+        btnLogin.textContent = "Mengecek Sandi..."; btnLogin.disabled = true;
+        signInWithEmailAndPassword(auth, email, password)
+            .then(() => { btnLogin.textContent = "Masuk ke Panel"; btnLogin.disabled = false; })
+            .catch(() => { alert("Login Gagal! Email atau Sandi salah."); btnLogin.textContent = "Masuk ke Panel"; btnLogin.disabled = false; });
+    }
+
+    window.prosesLogout = () => {
+        if(confirm("Yakin ingin keluar?")) { signOut(auth).then(() => { alert("Berhasil keluar."); }); }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('login-screen').style.display = 'none'; document.getElementById('dashboard-bendahara').style.display = 'block';
+        } else {
+            document.getElementById('login-screen').style.display = 'block'; document.getElementById('dashboard-bendahara').style.display = 'none';
+        }
+    });
+
+    // ================= DATA (REAL-TIME) =================
     onValue(ref(db, 'KasKelasAbsen'), (snapshot) => {
         const rootData = snapshot.val() || {};
         semuaDataKas = rootData.Data || {};
         dataLiburKas = rootData.LiburMinggu || {};
+        dataPengeluaran = rootData.Pengeluaran || {}; // Ambil data pengeluaran
+        
+        hitungSaldoDanPengeluaran(); // Kalkulasi Uang
         renderGrid();
         renderTabelExcel();
         if(selectNama.value) window.cekTunggakanSiswa(); 
     });
+
+    // ================= MODUL KEUANGAN (SALDO & PENGELUARAN) =================
+    
+    // Fungsi Menghitung Saldo
+    function hitungSaldoDanPengeluaran() {
+        let totalMasuk = 0;
+        let totalKeluar = 0;
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+
+        // Hitung Semua Uang Masuk dari setiap minggu yang lunas (2000 per orang)
+        Object.keys(semuaDataKas).forEach(minggu => {
+            Object.keys(semuaDataKas[minggu]).forEach(namaSiswa => {
+                if(semuaDataKas[minggu][namaSiswa] === true) {
+                    totalMasuk += NOMINAL_KAS;
+                }
+            });
+        });
+
+        // Hitung Semua Pengeluaran
+        let htmlRiwayatPublik = '';
+        let htmlRiwayatAdmin = '';
+
+        if(Object.keys(dataPengeluaran).length === 0) {
+            htmlRiwayatPublik = '<div style="text-align:center; font-size:0.8rem; color:gray;">Belum ada pengeluaran dicatat.</div>';
+            htmlRiwayatAdmin = htmlRiwayatPublik;
+        } else {
+            // Urutkan pengeluaran dari yang terbaru
+            const arrPengeluaran = Object.keys(dataPengeluaran).map(key => ({ id: key, ...dataPengeluaran[key] })).sort((a,b) => b.waktu - a.waktu);
+            
+            arrPengeluaran.forEach(keluar => {
+                totalKeluar += parseInt(keluar.nominal);
+                let tglFormat = new Date(keluar.tanggal).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                
+                // Item Publik
+                htmlRiwayatPublik += `
+                    <div class="expense-item">
+                        <div class="expense-info"><strong>${keluar.keterangan}</strong><span>${tglFormat}</span></div>
+                        <div class="expense-amount">- ${formatRupiah(keluar.nominal)}</div>
+                    </div>`;
+                    
+                // Item Admin (Ada tombol hapus)
+                htmlRiwayatAdmin += `
+                    <div class="expense-item">
+                        <div class="expense-info"><strong>${keluar.keterangan}</strong><span>${tglFormat}</span></div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="expense-amount">- ${formatRupiah(keluar.nominal)}</span>
+                            <button onclick="hapusPengeluaran('${keluar.id}')" style="background:none; border:none; color:#ef4444; font-size:1.2rem; cursor:pointer;" title="Hapus">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // Tulis ke HTML
+        let sisaSaldo = totalMasuk - totalKeluar;
+        
+        document.getElementById('saldo-masuk-publik').textContent = formatRupiah(totalMasuk);
+        document.getElementById('saldo-keluar-publik').textContent = formatRupiah(totalKeluar);
+        document.getElementById('saldo-sisa-publik').textContent = formatRupiah(sisaSaldo);
+        document.getElementById('list-pengeluaran-publik').innerHTML = htmlRiwayatPublik;
+
+        document.getElementById('saldo-masuk-admin').textContent = formatRupiah(totalMasuk);
+        document.getElementById('saldo-keluar-admin').textContent = formatRupiah(totalKeluar);
+        document.getElementById('saldo-sisa-admin').textContent = formatRupiah(sisaSaldo);
+        document.getElementById('list-pengeluaran-admin').innerHTML = htmlRiwayatAdmin;
+    }
+
+    // Fungsi Bendahara Simpan Pengeluaran
+    window.simpanPengeluaran = () => {
+        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
+        
+        const tgl = document.getElementById('input-tgl-keluar').value;
+        const ket = document.getElementById('input-ket-keluar').value;
+        const nom = document.getElementById('input-nom-keluar').value;
+
+        if(!tgl || !ket || !nom) { alert("Semua kolom pengeluaran wajib diisi!"); return; }
+
+        push(ref(db, 'KasKelasAbsen/Pengeluaran'), {
+            tanggal: tgl,
+            keterangan: ket,
+            nominal: parseInt(nom),
+            waktu: Date.now()
+        }).then(() => {
+            alert("Pengeluaran berhasil dicatat!");
+            document.getElementById('input-ket-keluar').value = "";
+            document.getElementById('input-nom-keluar').value = "";
+        });
+    }
+
+    // Fungsi Bendahara Hapus Pengeluaran (Jika salah catat)
+    window.hapusPengeluaran = (idUnik) => {
+        if(!auth.currentUser) return;
+        if(confirm("Yakin ingin menghapus catatan pengeluaran ini? Saldo sisa akan kembali bertambah.")) {
+            remove(ref(db, 'KasKelasAbsen/Pengeluaran/' + idUnik));
+        }
+    }
+
 
     window.cekTunggakanSiswa = () => {
         const nama = selectNama.value;
@@ -379,32 +560,23 @@
         let batasHitung = DAFTAR_MINGGU.indexOf(MINGGU_BERJALAN);
         
         targetBayarOtomatis = ""; 
-
         for(let i = 0; i <= batasHitung; i++) {
             let m = DAFTAR_MINGGU[i];
             if(dataLiburKas[m]) continue; 
             let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false;
-            if(!isLunas) {
-                targetBayarOtomatis = m;
-                break; 
-            }
+            if(!isLunas) { targetBayarOtomatis = m; break; }
         }
 
         infoBox.style.display = "block";
         if(targetBayarOtomatis !== "") {
             infoBox.innerHTML = `Tunggakan terlama kamu untuk tanggal:<br><b>${targetBayarOtomatis}</b>`;
-            btnKirim.disabled = false;
-            btnKirim.style.opacity = "1";
-            btnKirim.textContent = "Kirim Konfirmasi Bayar";
-            btnToggleQr.style.display = "block"; // Munculkan tombol QR jika ada tunggakan
+            btnKirim.disabled = false; btnKirim.style.opacity = "1"; btnKirim.textContent = "Kirim Konfirmasi Bayar";
+            btnToggleQr.style.display = "block"; 
         } else {
             infoBox.innerHTML = `✅ Hebat! Kamu sudah <b>Lunas</b> sampai minggu ini.`;
             infoBox.style.background = "#dcfce7"; infoBox.style.color = "#166534"; infoBox.style.borderColor = "#86efac";
-            btnKirim.disabled = true;
-            btnKirim.style.opacity = "0.5";
-            btnKirim.textContent = "Tidak Ada Tunggakan";
-            btnToggleQr.style.display = "none"; // Sembunyikan tombol QR jika sudah lunas
-            document.getElementById('qr-box-container').style.display = "none";
+            btnKirim.disabled = true; btnKirim.style.opacity = "0.5"; btnKirim.textContent = "Tidak Ada Tunggakan";
+            btnToggleQr.style.display = "none"; document.getElementById('qr-box-container').style.display = "none";
         }
     }
 
@@ -413,7 +585,6 @@
         const gridAdmin = document.getElementById('grid-status-admin');
         gridPublik.innerHTML = ''; gridAdmin.innerHTML = '';
         let batasHitung = DAFTAR_MINGGU.indexOf(MINGGU_BERJALAN);
-        
         const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
         const isMingguLibur = dataLiburKas[mingguAktif] === true;
 
@@ -431,18 +602,8 @@
                 : `<div class="tunggakan-info tunggak-tidak">✅ Bebas Tunggakan</div>`;
 
             if(isMingguLibur) {
-                gridPublik.innerHTML += `
-                    <div class="student-item">
-                        <div class="student-header"><span class="student-name">${nama}</span><span class="status-badge" style="background:#fef3c7; color:#d97706;">LIBUR KAS</span></div>
-                        ${labelTunggakan}
-                    </div>`;
-
-                gridAdmin.innerHTML += `
-                    <div class="student-item">
-                        <div class="student-header"><span class="student-name">${nama}</span><span class="status-badge" style="background:#fef3c7; color:#d97706;">LIBUR KAS</span></div>
-                        ${labelTunggakan}
-                        <div style="font-size:0.75rem; color:#d97706; text-align:center; font-weight:bold; margin-top:4px;">Minggu ini diliburkan</div>
-                    </div>`;
+                gridPublik.innerHTML += `<div class="student-item"><div class="student-header"><span class="student-name">${nama}</span><span class="status-badge" style="background:#fef3c7; color:#d97706;">LIBUR KAS</span></div>${labelTunggakan}</div>`;
+                gridAdmin.innerHTML += `<div class="student-item"><div class="student-header"><span class="student-name">${nama}</span><span class="status-badge" style="background:#fef3c7; color:#d97706;">LIBUR KAS</span></div>${labelTunggakan}<div style="font-size:0.75rem; color:#d97706; text-align:center; font-weight:bold; margin-top:4px;">Minggu ini diliburkan</div></div>`;
             } else {
                 const isLunasMingguIni = semuaDataKas[mingguAktif] ? semuaDataKas[mingguAktif][nama] : false;
                 const badgeClass = isLunasMingguIni ? 'lunas' : 'belum';
@@ -450,29 +611,16 @@
                 const btnWarna = isLunasMingguIni ? 'btn-red' : 'btn-green';
                 const btnTeks = isLunasMingguIni ? 'Batal Lunas' : 'Ceklis (Cash)';
 
-                gridPublik.innerHTML += `
-                    <div class="student-item">
-                        <div class="student-header"><span class="student-name">${nama}</span><span class="status-badge ${badgeClass}">${teksStatus}</span></div>
-                        ${labelTunggakan}
-                    </div>`;
-
-                gridAdmin.innerHTML += `
-                    <div class="student-item">
-                        <div class="student-header"><span class="student-name">${nama}</span><span class="status-badge ${badgeClass}">${teksStatus}</span></div>
-                        ${labelTunggakan}
-                        <button class="btn-sm ${btnWarna}" style="width:100%; margin-top:5px;" onclick="toggleStatusManual('${nama}')">${btnTeks}</button>
-                    </div>`;
+                gridPublik.innerHTML += `<div class="student-item"><div class="student-header"><span class="student-name">${nama}</span><span class="status-badge ${badgeClass}">${teksStatus}</span></div>${labelTunggakan}</div>`;
+                gridAdmin.innerHTML += `<div class="student-item"><div class="student-header"><span class="student-name">${nama}</span><span class="status-badge ${badgeClass}">${teksStatus}</span></div>${labelTunggakan}<button class="btn-sm ${btnWarna}" style="width:100%; margin-top:5px;" onclick="toggleStatusManual('${nama}')">${btnTeks}</button></div>`;
             }
         });
     }
 
     window.toggleLiburMinggu = () => {
+        if(!auth.currentUser) { alert("Sesi login kamu sudah habis, silakan login ulang!"); return; }
         const statusLiburSekarang = dataLiburKas[mingguAktif] || false;
-        const pesan = statusLiburSekarang 
-            ? `Aktifkan kembali kas untuk tanggal ${mingguAktif}?` 
-            : `Liburkan kas untuk tanggal ${mingguAktif}?`;
-        
-        if(confirm(pesan)) {
+        if(confirm(statusLiburSekarang ? `Aktifkan kembali kas untuk tanggal ${mingguAktif}?` : `Liburkan kas untuk tanggal ${mingguAktif}?`)) {
             update(ref(db, 'KasKelasAbsen/LiburMinggu'), { [mingguAktif]: !statusLiburSekarang });
         }
     }
@@ -480,20 +628,18 @@
     function renderTabelExcel() {
         let batasHitung = DAFTAR_MINGGU.indexOf(MINGGU_BERJALAN);
         let tableHTML = '<table class="rekap-table"><tr><th>Nama Siswa</th>';
-        
-        for(let i = 0; i <= batasHitung; i++) tableHTML += `<th>${DAFTAR_MINGGU[i].split(' ')[0]} ${DAFTAR_MINGGU[i].split(' ')[1]}</th>`;
+        for(let i = 0; i <= batasHitung; i++) {
+            let part = DAFTAR_MINGGU[i].split(' ');
+            tableHTML += `<th>${part[0]} ${part[1].substring(0,3)}</th>`;
+        }
         tableHTML += '</tr>';
 
         DAFTAR_SISWA.forEach(nama => {
             tableHTML += `<tr><td>${nama}</td>`;
             for(let i = 0; i <= batasHitung; i++) {
                 let m = DAFTAR_MINGGU[i];
-                if(dataLiburKas[m]) {
-                    tableHTML += `<td style="background:#fef3c7; color:#d97706; font-size:0.65rem;">LIBUR</td>`;
-                } else {
-                    let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false;
-                    tableHTML += `<td>${isLunas ? '✅' : '❌'}</td>`;
-                }
+                if(dataLiburKas[m]) { tableHTML += `<td style="background:#fef3c7; color:#d97706; font-size:0.65rem;">LIBUR</td>`; } 
+                else { let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false; tableHTML += `<td>${isLunas ? '✅' : '❌'}</td>`; }
             }
             tableHTML += '</tr>';
         });
@@ -504,7 +650,6 @@
     window.downloadCSV = () => {
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
         let batasHitung = DAFTAR_MINGGU.indexOf(MINGGU_BERJALAN);
-        
         let headers = ["Nama Siswa"];
         for(let i = 0; i <= batasHitung; i++) headers.push(DAFTAR_MINGGU[i]);
         csvContent += headers.join(";") + "\r\n";
@@ -513,20 +658,14 @@
             let row = [nama];
             for(let i = 0; i <= batasHitung; i++) {
                 let m = DAFTAR_MINGGU[i];
-                if(dataLiburKas[m]) {
-                    row.push("LIBUR");
-                } else {
-                    let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false;
-                    row.push(isLunas ? "✅" : "❌");
-                }
+                if(dataLiburKas[m]) { row.push("LIBUR"); } 
+                else { let isLunas = semuaDataKas[m] ? semuaDataKas[m][nama] : false; row.push(isLunas ? "✅" : "❌"); }
             }
             csvContent += row.join(";") + "\r\n";
         });
 
         var encodedUri = encodeURI(csvContent);
-        var link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Buku_Kas_TITL3_Kuningan.csv");
+        var link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "Buku_Kas_SMKN3_Kuningan.csv");
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
@@ -535,24 +674,18 @@
         const hariIni = new Date().toDateString();
         const batasLimit = localStorage.getItem('limitKasAbsen_' + nama);
         
-        if(batasLimit === hariIni) {
-            alert("Sabar, kamu sudah mengirim konfirmasi transfer hari ini. Tunggu bendahara mengeceknya!");
-            return;
-        }
+        if(batasLimit === hariIni) { alert("Sabar, kamu sudah mengirim konfirmasi transfer hari ini."); return; }
 
         push(ref(db, 'KasKelasAbsen/PendingQR'), { nama: nama, minggu: targetBayarOtomatis, waktu: Date.now() });
         localStorage.setItem('limitKasAbsen_' + nama, hariIni);
-        
         alert(`Berhasil mengirim konfirmasi!\nIni akan digunakan untuk melunasi tanggal:\n${targetBayarOtomatis}\n\nBeritahu Bendahara untuk ACC.`);
         
-        document.getElementById('info-auto-pay').style.display = "none";
-        document.getElementById('qr-box-container').style.display = "none";
-        document.getElementById('btn-toggle-qr').style.display = "none";
-        selectNama.value = "";
-        document.getElementById('btn-kirim-qr').disabled = true;
+        document.getElementById('info-auto-pay').style.display = "none"; document.getElementById('qr-box-container').style.display = "none";
+        document.getElementById('btn-toggle-qr').style.display = "none"; selectNama.value = ""; document.getElementById('btn-kirim-qr').disabled = true;
     }
 
     window.accTransfer = (idUnik, namaSiswa, untukMinggu) => {
+        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
         if(confirm(`ACC uang dari ${namaSiswa} untuk tanggal \n${untukMinggu}?`)) {
             update(ref(db, `KasKelasAbsen/Data/${untukMinggu}`), { [namaSiswa]: true });
             remove(ref(db, 'KasKelasAbsen/PendingQR/' + idUnik));
@@ -560,45 +693,30 @@
     }
 
     window.tolakTransfer = (idUnik, namaSiswa) => {
-        if(confirm(`Tolak konfirmasi ${namaSiswa}?`)) {
-            remove(ref(db, 'KasKelasAbsen/PendingQR/' + idUnik));
-        }
+        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
+        if(confirm(`Tolak konfirmasi ${namaSiswa}?`)) { remove(ref(db, 'KasKelasAbsen/PendingQR/' + idUnik)); }
     }
 
     window.toggleStatusManual = (namaSiswa) => {
-        if(dataLiburKas[mingguAktif]) {
-            alert("Minggu ini sedang status LIBUR KAS. Tidak bisa diubah.");
-            return;
-        }
+        if(!auth.currentUser) { alert("Sesi habis, silakan login ulang!"); return; }
+        if(dataLiburKas[mingguAktif]) { alert("Minggu ini sedang status LIBUR KAS. Tidak bisa diubah."); return; }
         const statusSekarang = semuaDataKas[mingguAktif] ? semuaDataKas[mingguAktif][namaSiswa] : false;
-        update(ref(db, `KasKelasAbsen/Data/${mingguAktif}`), { [namaSiswa]: !statusSekarang });
+        update(ref(db, `KasKelasAbsen/Data/${mingguAktif}`), { [namaSiswa]: !statusSekarang }).catch(err => {
+            alert("Akses ditolak oleh Firebase! Pastikan kamu sudah Login dengan benar dan Rule Database sudah diubah.");
+        });
     }
 
+    // Listener Antrean 
     onValue(ref(db, 'KasKelasAbsen/PendingQR'), (snapshot) => {
         const pendingData = snapshot.val();
         const listPending = document.getElementById('list-pending');
         listPending.innerHTML = '';
-
-        if(!pendingData) {
-            listPending.innerHTML = '<div style="text-align:center; color:gray; font-size:0.85rem;">Tidak ada antrean transfer.</div>';
-            return;
-        }
+        if(!pendingData) { listPending.innerHTML = '<div style="text-align:center; color:gray; font-size:0.85rem;">Tidak ada antrean transfer.</div>'; return; }
 
         const arrPending = Object.keys(pendingData).map(key => ({ id: key, ...pendingData[key] })).sort((a,b) => a.waktu - b.waktu);
         arrPending.forEach(trx => {
             let waktuStr = new Date(trx.waktu).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
-            listPending.innerHTML += `
-                <div class="pending-item">
-                    <div>
-                        <strong style="display:block; font-size:0.95rem;">${trx.nama}</strong>
-                        <span style="font-size:0.75rem; color:var(--primary-dark); font-weight:bold; display:block;">Tanggal: ${trx.minggu}</span>
-                        <span style="font-size:0.7rem; color:var(--muted); display:block;">Jam Kirim: ${waktuStr}</span>
-                    </div>
-                    <div class="pending-actions">
-                        <button class="btn-sm btn-green" onclick="accTransfer('${trx.id}', '${trx.nama}', '${trx.minggu}')">ACC</button>
-                        <button class="btn-sm btn-red" onclick="tolakTransfer('${trx.id}', '${trx.nama}')">Tolak</button>
-                    </div>
-                </div>`;
+            listPending.innerHTML += `<div class="pending-item"><div><strong style="display:block; font-size:0.95rem;">${trx.nama}</strong><span style="font-size:0.75rem; color:var(--primary-dark); font-weight:bold; display:block;">Tanggal: ${trx.minggu}</span><span style="font-size:0.7rem; color:var(--muted); display:block;">Jam Kirim: ${waktuStr}</span></div><div class="pending-actions"><button class="btn-sm btn-green" onclick="accTransfer('${trx.id}', '${trx.nama}', '${trx.minggu}')">ACC</button><button class="btn-sm btn-red" onclick="tolakTransfer('${trx.id}', '${trx.nama}')">Tolak</button></div></div>`;
         });
     });
 </script>
